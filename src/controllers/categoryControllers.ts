@@ -1,72 +1,116 @@
 import type { Request, Response } from "express";
-import { Category } from "../types/Category";
-import { event } from "../types/Event";
-// import { Events } from "../types/Event";
-// import { events } from "../types/Event";
+import prisma from "../lib/Prisma.js";
 
-let nextId = 2;
-let categories : Category[] = [
-    {
-        id:1,
-        category : "Mahasiswa Universitas Harkat"
-    }
-];
+export const getCategory = async (req: Request, res: Response) => {
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: {
+        id: "asc",
+      },
+    });
 
-
-export const  getCategory = (req : Request, res : Response) => {
     res.json(categories);
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+      error,
+    });
+  }
 };
 
-export const createCategory = (req : Request, res : Response) => {
-    try {
-        const {category} = req.body;
-    
-    if(!category) {
-        return res.status(404).json({
-            message:"Category Wajib Diisi"
-        });
+export const createCategory = async (req: Request, res: Response) => {
+  try {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        message: "Category Wajib Diisi",
+      });
     }
-       const newCategory: Category = { 
-         id: nextId++, 
-         category, 
-    };
-    categories.push(newCategory);
-    res.status(201).json(newCategory)
-    } catch (error) {
-        res.status(500).json({
-            message : "Internal Server Error",
-        });
-    };
+
+    const newCategory = await prisma.category.create({
+      data: {
+        name,
+      },
+    });
+
+    res.status(201).json(newCategory);
+  } catch (error: any) {
+    console.error("ERROR DETAIL:", error);
+
+    res.status(500).json({
+      message: "Internal Server Error",
+      errorName: error.name,
+      errorMessage: error.message,
+      errorCode: error.code,
+    });
+  }
 };
-
-export const getCategoryById = (req : Request, res : Response) => {
-    const id =Number(req.params.id);
-
-    const categorie = categories.find((e) => e.id === id);
-
-    if(!event) {
-        return res.status(404).json({
-            message:"Category Tidak Ditemukan",
-        });
-    }
-    res.json(categorie);
-};
-
-export const updateCategory = (req:Request, res : Response) => {
+export const getCategoryById = async (req: Request, res: Response) => {
+  try {
     const id = Number(req.params.id);
-    const categorie = categories.find((e) => e.id === id);
 
-    if (!categorie) {
-        return res.status(400).json({
-            message : "category tidak ditemukan"
-        });
+    const category = await prisma.category.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!category) {
+      return res.status(404).json({
+        message: "Category Tidak Ditemukan",
+      });
     }
-    categorie.category = req.body ?? categorie.category;
 
-    res.json(categorie)
-}
-export const deleteCategory = (req:Request, res:Response) => {
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+      error,
+    });
+  }
+};
+
+export const updateCategory = async (req: Request, res: Response) => {
+  try {
     const id = Number(req.params.id);
-    categories = categories.filter((e) => e.id === id);
-    res.json({message : "Category Berhasil Dihapus"})
-}
+    const { name } = req.body;
+
+    const category = await prisma.category.update({
+      where: {
+        id,
+      },
+      data: {
+        name,
+      },
+    });
+
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({
+      message: "Category gagal diupdate",
+      error,
+    });
+  }
+};
+
+export const deleteCategory = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    await prisma.category.delete({
+      where: {
+        id,
+      },
+    });
+
+    res.json({
+      message: "Category Berhasil Dihapus",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Category gagal dihapus",
+      error,
+    });
+  }
+};

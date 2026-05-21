@@ -1,26 +1,10 @@
-export type Events = {
+export type Event = {
   id: number;
   title: string;
-  date: string;
+  categoryId: number;
+  speakersId : number ;
+  location: string;
+  dateEvent: string;
   description: string;
-  // image : string;
-  isPublished: boolean;
+  createdAt: string;
 }
-
-export const event = [
-       {
-    id: 1,
-    title: "Seminar React",
-    date: "2026-05-10",
-    description: "Jakarta",
-    isPublished: true,
-    
-  },
-  {
-    id: 2,
-    title: "Workshop TypeScript",
-    date: "2026-05-15",
-    description: "Bandung",
-    isPublished: false,
-  },
-];
