@@ -7,34 +7,43 @@ export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(404).json({ message: "Email dan Password wajib diisi" });
+    return res.status(400).json({ message: "Email dan Password wajib diisi" });
   }
 
-  const exitingUser = await prisma.user.findUnique({
+  const existingUser = await prisma.user.findUnique({
     where: {
-      email
+      email,
+    },
+    include: {
+      role: true,
     },
   });
-  if (!exitingUser) {
+  if (!existingUser) {
     return res.status(404).json({ message: "Email Tidak Terdaftar" });
   }
 
-  const isPasswordValid = await bcrypt.compare(password, exitingUser.password);
-    if (!isPasswordValid) {
-        return res.status(400).json({ message: "Password Salah" });
-    }
+  const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: "Password Salah" });
+  }
 
-    const token = jwt.sign({ userId: exitingUser.id }, process.env.JWT_SECRET || "secretkey", { expiresIn: "1h" });
+  const token = jwt.sign(
+    { userId: existingUser.id,
+       role: existingUser.role.name,
+    },
+    process.env.JWT_SECRET || "secretkey",
+    { expiresIn: "1h" },
+  );
 
-
-    res.status(200).json({
-      token,
-      user: {
-        name: exitingUser.name,
-        email: exitingUser.email
-      },
-      message: "Login Berhasil"
-    });
+  res.status(200).json({
+    token,
+    user: {
+      name: existingUser.name,
+      email: existingUser.email,
+      role: existingUser.role.name,
+    },
+    message: "Login Berhasil",
+  });
 };
 
 export const register = async (req: Request, res: Response) => {
@@ -46,7 +55,7 @@ export const register = async (req: Request, res: Response) => {
 
   const existingUser = await prisma.user.findUnique({
     where: {
-      email
+      email,
     },
   });
 
@@ -55,19 +64,28 @@ export const register = async (req: Request, res: Response) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  
+
   const newUser = await prisma.user.create({
     data: {
       name,
       email,
       password: hashedPassword,
+      role: {
+        connect: {
+          name: "User",
+        },
+      },
+    },
+    include: {
+      role: true,
     },
   });
-  
+
   res.status(201).json({
     user: {
       name: newUser.name,
       email: newUser.email,
+      role: newUser.role,
     },
   });
 };

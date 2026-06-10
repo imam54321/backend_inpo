@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "mysql"
-  url       = env("DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model Category {
@@ -42,21 +42,23 @@ model Event {
   @@map("events")
 }
 
-model User{
-  id Int @id @default(autoincrement())
-  name String
-  password String
-  email String @unique
-  createdAt   DateTime  @default(now()) @map("created_at")
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  password  String
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  roleId    Int      @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id])
 
   @@map("users")
 }
 
 model Role {
-  id Int @id @default(autoincrement())
-  name String @unique
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  users     User[]
 
   @@map("roles")
-
 }

@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import { Request, Response } from "express";
 import prisma from "../lib/Prisma.js";
 
 export const getCategory = async (req: Request, res: Response) => {
